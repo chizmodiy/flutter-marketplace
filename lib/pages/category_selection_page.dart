@@ -1,0 +1,412 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:zeno/theme/app_colors.dart';
+import 'package:zeno/theme/app_text_styles.dart';
+import 'package:zeno/models/category.dart'; // New import
+import 'package:zeno/services/category_service.dart'; // New import
+import 'package:zeno/models/subcategory.dart'; // New import
+import 'package:zeno/services/subcategory_service.dart'; // New import
+import 'package:supabase_flutter/supabase_flutter.dart'; // New import for Supabase client
+import 'package:collection/collection.dart'; // Import for firstWhereOrNull
+import '../services/profile_service.dart';
+import '../widgets/blocked_user_bottom_sheet.dart';
+
+class CategorySelectionPage extends StatefulWidget {
+  final Category? selectedCategory;
+  final Subcategory? selectedSubcategory;
+
+  const CategorySelectionPage({
+    super.key,
+    this.selectedCategory,
+    this.selectedSubcategory,
+  });
+
+  @override
+  State<CategorySelectionPage> createState() => _CategorySelectionPageState();
+}
+
+class _CategorySelectionPageState extends State<CategorySelectionPage> {
+  Category? _selectedCategory; // Currently selected category
+  Subcategory? _selectedSubcategory; // Currently selected subcategory
+
+  List<Category> _categories = []; // List of all categories
+  bool _isLoadingCategories = true; // Flag for category loading
+
+  List<Subcategory> _subcategories =
+      []; // List of subcategories for the selected category
+  bool _isLoadingSubcategories = false; // Flag for subcategory loading
+  final ProfileService _profileService = ProfileService();
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedCategory = widget.selectedCategory;
+    _selectedSubcategory = widget.selectedSubcategory;
+    print(
+      'CategorySelectionPage: initState - selectedCategory = ${_selectedCategory?.name}',
+    );
+    print(
+      'CategorySelectionPage: initState - selectedSubcategory = ${_selectedSubcategory?.name}',
+    );
+    _loadCategories();
+
+    // Якщо категорія вже обрана, завантажуємо її підкатегорії
+    if (_selectedCategory != null) {
+      _loadSubcategories(_selectedCategory!.id);
+    }
+
+    // Перевіряємо статус користувача після завантаження
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final currentUser = Supabase.instance.client.auth.currentUser;
+      if (currentUser != null) {
+        final userStatus = await _profileService.getUserStatus();
+        if (userStatus == 'blocked') {
+          _showBlockedUserBottomSheet();
+        }
+      }
+    });
+  }
+
+  void _showBlockedUserBottomSheet() async {
+    // Отримуємо профіль користувача з причиною блокування
+    final userProfile = await _profileService.getCurrentUserProfile();
+    final blockReason = userProfile?['block_reason'];
+
+    if (mounted) {
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        isDismissible: false, // Неможливо закрити
+        enableDrag: false, // Неможливо перетягувати
+        builder: (context) => BlockedUserBottomSheet(blockReason: blockReason),
+      );
+    }
+  }
+
+  Future<void> _loadCategories() async {
+    setState(() {
+      _isLoadingCategories = true;
+    });
+    try {
+      final categoryService = CategoryService();
+      final fetchedCategories = await categoryService.getCategories();
+
+      setState(() {
+        _categories = fetchedCategories;
+        _isLoadingCategories = false;
+      });
+    } catch (e) {
+      // Handle error (e.g., show a snackbar or dialog)
+
+      setState(() {
+        _isLoadingCategories = false;
+      });
+    }
+  }
+
+  Future<void> _loadSubcategories(String categoryId) async {
+    setState(() {
+      _isLoadingSubcategories = true;
+      _subcategories = []; // Clear previous subcategories
+      // Не скидаємо _selectedSubcategory, щоб зберегти обрану підкатегорію
+    });
+    try {
+      final subcategoryService = SubcategoryService(Supabase.instance.client);
+      final fetchedSubcategories = await subcategoryService
+          .getSubcategoriesForCategory(categoryId);
+
+      setState(() {
+        _subcategories = fetchedSubcategories;
+        _isLoadingSubcategories = false;
+        print(
+          'CategorySelectionPage: _loadSubcategories - loaded ${fetchedSubcategories.length} subcategories',
+        );
+        print(
+          'CategorySelectionPage: _loadSubcategories - current _selectedSubcategory = ${_selectedSubcategory?.name}',
+        );
+      });
+    } catch (e) {
+      // Handle error
+
+      setState(() {
+        _isLoadingSubcategories = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor:
+          AppColors.white, // Ensure the entire page background is white
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(
+          kToolbarHeight + 1,
+        ), // Add 1 for the border
+        child: AppBar(
+          backgroundColor: AppColors.white,
+          elevation: 0,
+          automaticallyImplyLeading: false,
+          title: GestureDetector(
+            onTap: () {
+              // Return selected category and subcategory to previous page
+
+              Navigator.pop(context, {
+                'category': _selectedCategory,
+                'subcategory': _selectedSubcategory,
+              });
+            },
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.arrow_back, color: AppColors.black, size: 24),
+                const SizedBox(width: 18),
+                Text('Категорія', style: AppTextStyles.heading2Semibold),
+              ],
+            ),
+          ),
+          centerTitle: false,
+          bottom: PreferredSize(
+            preferredSize: Size.zero,
+            child: Container(height: 1.0, color: AppColors.zinc200),
+          ),
+        ),
+      ),
+      body: _isLoadingCategories
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 20),
+              child: Column(
+                children: [
+                  // Build category buttons dynamically
+                  ..._categories.map((category) {
+                    final bool isExpanded = _selectedCategory == category;
+                    return Padding(
+                      padding: const EdgeInsets.only(
+                        bottom: 12.0,
+                      ), // Add spacing between category buttons
+                      child: _buildCategoryButton(
+                        category: category,
+                        iconPath: _getIconPathForCategory(
+                          category.name,
+                        ), // Dynamic icon based on category name
+                        isExpanded: isExpanded,
+                        onTap: () async {
+                          if (category.name == 'Віддам безкоштовно') {
+                            await _loadSubcategories(category.id);
+                            final freeSubcategory = _subcategories
+                                .firstWhereOrNull(
+                                  (sub) => sub.name == 'Безкоштовно',
+                                );
+                            Navigator.pop(context, {
+                              'category': category,
+                              'subcategory': freeSubcategory,
+                            });
+                          } else {
+                            setState(() {
+                              if (_selectedCategory == category) {
+                                _selectedCategory =
+                                    null; // Collapse if already selected
+                                _selectedSubcategory = null;
+                                _subcategories = [];
+                              } else {
+                                _selectedCategory = category;
+                                _loadSubcategories(category.id);
+                              }
+                            });
+                          }
+                        },
+                      ),
+                    );
+                  }),
+                ],
+              ),
+            ),
+    );
+  }
+
+  Widget _buildCategoryButton({
+    required Category category,
+    required String iconPath,
+    bool isExpanded = false,
+    VoidCallback? onTap,
+  }) {
+    final bool isSelected = _selectedCategory == category;
+    // final bool showCheckmark = isSelected && _selectedSubcategory == null; // This logic will be handled directly in the checkmark condition
+    final bool isFreeCategory = category.name == 'Віддам безкоштовно';
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppColors.white, // Always white background for category button
+          boxShadow: const [
+            BoxShadow(
+              color: Color.fromRGBO(16, 24, 40, 0.05),
+              offset: Offset(0, 1),
+              blurRadius: 2,
+            ),
+          ],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.zinc200, width: 1),
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                SvgPicture.asset(
+                  iconPath,
+                  colorFilter: ColorFilter.mode(
+                    AppColors.zinc400,
+                    BlendMode.srcIn,
+                  ),
+                  width: 24,
+                  height: 24,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    category.name,
+                    style: AppTextStyles.body1Semibold,
+                  ),
+                ),
+                if (!isFreeCategory) // Only show arrow for non-free categories
+                  Icon(
+                    isExpanded
+                        ? Icons.keyboard_arrow_up
+                        : Icons.keyboard_arrow_down,
+                    color: AppColors.black,
+                  ),
+              ],
+            ),
+            if (isExpanded &&
+                !_isLoadingSubcategories &&
+                !isFreeCategory) // Hide subcategories for "Віддам безкоштовно"
+              Padding(
+                padding: const EdgeInsets.only(top: 12.0),
+                child: Column(
+                  children: [
+                    // Dynamically build subcategory buttons
+                    ..._subcategories.map((subcategory) {
+                      final bool isSelected =
+                          _selectedSubcategory?.id == subcategory.id;
+                      print(
+                        'CategorySelectionPage: ${subcategory.name} isSelected = $isSelected',
+                      );
+                      return _buildSubcategoryButton(
+                        title: subcategory.name,
+                        isSelected: isSelected,
+                        onTap: () {
+                          // Повертаємося на сторінку фільтрів з обраною категорією та підкатегорією
+                          Navigator.pop(context, {
+                            'category': _selectedCategory,
+                            'subcategory': subcategory,
+                          });
+                        },
+                      );
+                    }),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSubcategoryButton({
+    required String title,
+    bool isSelected = false,
+    VoidCallback? onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        margin: const EdgeInsets.symmetric(
+          vertical: 2,
+          horizontal: 6,
+        ), // Margin for the subcategory buttons
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.zinc100
+              : AppColors.white, // Zinc-100 for selected subcategory
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  color: AppColors.color2,
+                  fontSize: 16,
+                  fontFamily: 'Inter',
+                  fontWeight: isSelected
+                      ? FontWeight.w600
+                      : FontWeight
+                            .w500, // Medium for unselected, Semibold for selected
+                  height: 1.50,
+                  letterSpacing: 0.16,
+                ),
+              ),
+            ),
+            if (isSelected)
+              SvgPicture.asset(
+                'assets/icons/check.svg',
+                colorFilter: ColorFilter.mode(
+                  AppColors.primary,
+                  BlendMode.srcIn,
+                ),
+                width: 20,
+                height: 20,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Helper to get icon path based on category name (you'll need to expand this for all categories)
+  String _getIconPathForCategory(String categoryName) {
+    switch (categoryName) {
+      case 'Допомога':
+        return 'assets/icons/heart-hand.svg';
+      case 'Дитячий світ':
+        return 'assets/icons/baby.svg';
+      case 'Нерухомість':
+        return 'assets/icons/building-05.svg';
+      case 'Авто':
+        return 'assets/icons/car-01.svg';
+      case 'Запчастини для транспорту':
+        return 'assets/icons/engine-svgrepo-com 1.svg';
+      case 'Робота':
+        return 'assets/icons/briefcase-01.svg';
+      case 'Тварини':
+        return 'assets/icons/dog.svg';
+      case 'Дім і сад':
+        return 'assets/icons/sprout.svg';
+      case 'Електроніка':
+        return 'assets/icons/monitor-05.svg';
+      case 'Бізнес та послуги':
+        return 'assets/icons/file-check-02.svg';
+      case 'Житло подобово':
+        return 'assets/icons/home-03.svg';
+      case 'Оренда та прокат':
+        return 'assets/icons/handshake.svg';
+      case 'Мода і стиль':
+        return 'assets/icons/shirt.svg';
+      case 'Хобі, відпочинок і спорт':
+        return 'assets/icons/dumbbell.svg';
+      case 'Віддам безкоштовно':
+        return 'assets/icons/gift-01.svg';
+      case 'Знайомства':
+        return 'assets/icons/users-round.svg';
+      default:
+        return 'assets/icons/grid-01.svg'; // Default icon
+    }
+  }
+}

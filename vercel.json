@@ -1,0 +1,15 @@
+{
+  "buildCommand": "bash scripts/vercel_flutter_build.sh",
+  "outputDirectory": "build/web",
+  "routes": [
+    { "src": "^/(assets/.*)$", "dest": "/$1" },
+    { "src": "^/(icons/.*)$", "dest": "/$1" },
+    { "src": "^/(canvaskit/.*)$", "dest": "/$1" },
+    { "src": "^/(favicon\\.(ico|png)|manifest\\.json|AssetManifest\\.json|FontManifest\\.json|flutter(_bootstrap)?\\.js|main\\.dart\\.js|flutter_service_worker\\.js|version\\.json)$", "dest": "/$1" },
+    { "src": "^/404\\.html$", "dest": "/404.html" },
+    { "src": "^/(admin(|/.*))$", "dest": "/index.html" },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ]
+}
+
+
