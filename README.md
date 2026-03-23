@@ -68,26 +68,4 @@ lib/
 └── data/
 ```
 
-## 🤝 Внесок у проект
 
-Якщо ви хочете внести свій внесок у проект:
-
-1. Форкніть репозиторій
-2. Створіть гілку для нової функціональності
-3. Внесіть зміни
-4. Відправте пул-реквест
-
-## 📄 Ліцензія
-
-Цей проект ліцензовано під [MIT License](LICENSE).
-
-## 👥 Автори
-
-- [Ваше ім'я](https://github.com/your-username)
-
-## 📞 Контакти
-
-Якщо у вас виникли питання або пропозиції, зв'яжіться з нами:
-- Email: your.email@example.com
-- Telegram: @your_telegram
-- LinkedIn: [your-linkedin-profile](https://linkedin.com/in/your-profile)
