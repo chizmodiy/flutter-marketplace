@@ -54,6 +54,9 @@
 - Перегляд статистики
 - Управління категоріями та підкатегоріями
 
+### Відео
+- https://drive.google.com/file/d/1N8xb-n5v5pMUmUai4wT6ULvW6ILH7j_x/view?usp=drive_link
+- 
 ## 📚 Структура проекту
 
 ```
