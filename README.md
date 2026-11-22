@@ -1,33 +1,32 @@
 
+A mobile app for posting classified ads, built with Flutter and using Supabase as the backend.
 
-Мобільний додаток для розміщення оголошень, створений на Flutter з використанням Supabase як бекенд.
+## 🚀 Features
 
-## 🚀 Особливості
+- 📱 Cross-platform app (iOS and Android)
+- 🔐 User authentication
+- 📝 Creating and managing classified ads
+- 🔍 Advanced search and filtering
+- 📍 Regional filtering
+- 💰 Support for multiple currencies
+- 📸 Uploading and managing photos
+- 💬 User-to-user chat
+- ❤️ Saving listings to favorites
+- 👤 User profile
+- 🔔 Notification system
+- 📊 Admin dashboard
 
-- 📱 Кросплатформний додаток (iOS та Android)
-- 🔐 Аутентифікація користувачів
-- 📝 Створення та управління оголошеннями
-- 🔍 Розширений пошук та фільтрація
-- 📍 Регіональна фільтрація
-- 💰 Підтримка різних валют
-- 📸 Завантаження та управління фотографіями
-- 💬 Чат між користувачами
-- ❤️ Збереження оголошень у вибране
-- 👤 Профіль користувача
-- 🔔 Система сповіщень
-- 📊 Панель адміністратора
-
-## 🛠 Технічний стек
+## 🛠 Tech stack
 
 - **Frontend**: Flutter
 - **Backend**: Supabase
-- **База даних**: PostgreSQL
-- **Зберігання файлів**: Supabase Storage
-- **Аутентифікація**: Supabase Auth
+- **Database**: PostgreSQL
+- **File storage**: Supabase Storage
+- **Authentication**: Supabase Auth
 - **Realtime**: Supabase Realtime
-- **Пошук**: Algolia
+- **Search**: Algolia
 
-## 📋 Вимоги
+## 📋 Requirements
 
 - Flutter SDK
 - Dart SDK
@@ -35,29 +34,29 @@
 - Supabase CLI
 - Git
 
-## 📱 Функціональність
+## 📱 Features
 
-### Користувацькі можливості
-- Реєстрація та авторизація
-- Створення та редагування оголошень
-- Завантаження фотографій
-- Пошук оголошень
-- Фільтрація за різними параметрами
-- Чат з продавцями
-- Збереження оголошень у вибране
-- Управління профілем
+### User Features
+- Registration and authorization
+- Creating and editing listings
+- Uploading photos
+- Searching for listings
+- Filtering by various parameters
+- Chatting with sellers
+- Saving listings to favorites
+- Profile management
 
-### Адміністративні можливості
-- Модерація оголошень
-- Управління користувачами
-- Блокування користувачів
-- Перегляд статистики
-- Управління категоріями та підкатегоріями
+### Administrative Features
+- Moderating listings
+- Managing users
+- Blocking users
+- Viewing statistics
+- Managing categories and subcategories
 
-### Відео
+### Video
 - https://drive.google.com/file/d/1N8xb-n5v5pMUmUai4wT6ULvW6ILH7j_x/view?usp=drive_link
-- 
-## 📚 Структура проекту
+-
+## 📚 Project Structure
 
 ```
 lib/
@@ -67,8 +66,6 @@ lib/
 ├── pages/
 ├── widgets/
 ├── services/
-├── utils/
-└── data/
-```
+├── ut
 
-
+Translated with DeepL.com (free version)
